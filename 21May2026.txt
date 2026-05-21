@@ -1,0 +1,40 @@
+-- Q1: Total salary of HR department
+SELECT SUM(salary)
+FROM worker
+WHERE department = 'HR';
+
+-- Q2: Total salary for each department
+SELECT department, SUM(salary) AS total_salary
+FROM worker
+GROUP BY department;
+
+-- Q3: Departments with total salary less than 3,00,000
+SELECT department, SUM(salary) AS total_salary
+FROM worker
+GROUP BY department
+HAVING SUM(salary) < 300000;
+
+-- Q4: 2 departments with the least total salary
+SELECT department, SUM(salary) AS total_salary
+FROM worker
+GROUP BY department
+ORDER BY SUM(salary) ASC
+LIMIT 2;
+
+-- Q5: 2nd highest salary in Admin department
+SELECT first_name, salary
+FROM worker
+WHERE department = 'Admin'
+ORDER BY salary DESC
+LIMIT 1 OFFSET 1;
+
+-- Q5 (Advanced): 2nd highest salary per every department
+SELECT first_name, department, salary
+FROM worker w1
+WHERE salary = (
+    SELECT DISTINCT salary
+    FROM worker w2
+    WHERE w1.department = w2.department
+    ORDER BY salary DESC
+    LIMIT 1 OFFSET 1
+);

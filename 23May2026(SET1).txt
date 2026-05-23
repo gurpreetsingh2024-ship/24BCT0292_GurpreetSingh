@@ -1,0 +1,458 @@
+============================================================
+  SQL PRACTICE SET 1 — 23 May 2026
+  Tables: Departments, Jobs, Employees
+============================================================
+
+------------------------------------------------------------
+Q1. [JOINS] Employee name, job title, and department name
+------------------------------------------------------------
+SELECT e.name, j.job_title, d.dept_name
+FROM Employees e
+JOIN Jobs        j ON e.job_id  = j.job_id
+JOIN Departments d ON e.dept_id = d.dept_id;
+
+/* Expected Output:
+name    | job_title  | dept_name
+--------|------------|----------
+Alice   | Manager    | Finance
+Bob     | Analyst    | Finance
+Charlie | Manager    | IT
+David   | Developer  | IT
+Eve     | Developer  | IT
+Frank   | Analyst    | Sales
+Grace   | Developer  | Marketing
+*/
+
+------------------------------------------------------------
+Q2. [SUBQUERY] Employees earning more than avg IT salary
+------------------------------------------------------------
+SELECT name, salary
+FROM Employees
+WHERE salary > (
+    SELECT AVG(salary)
+    FROM Employees
+    WHERE dept_id = (SELECT dept_id FROM Departments WHERE dept_name = 'IT')
+);
+
+/* IT avg salary = (95000 + 85000 + 78000) / 3 = 86000
+Expected Output:
+name    | salary
+--------|----------
+Alice   | 120000.00
+Charlie |  95000.00
+*/
+
+------------------------------------------------------------
+Q3. [GROUP BY] Total salary expenditure per department name
+------------------------------------------------------------
+SELECT d.dept_name, SUM(e.salary) AS total_salary
+FROM Employees e
+JOIN Departments d ON e.dept_id = d.dept_id
+GROUP BY d.dept_name;
+
+/* Expected Output:
+dept_name  | total_salary
+-----------|-------------
+Finance    | 175000.00
+IT         | 258000.00
+Sales      |  52000.00
+Marketing  |  72000.00
+*/
+
+------------------------------------------------------------
+Q4. [HAVING] Departments with >2 employees AND avg salary >70,000
+------------------------------------------------------------
+SELECT d.dept_name,
+       COUNT(e.emp_id)  AS emp_count,
+       AVG(e.salary)    AS avg_salary
+FROM Employees e
+JOIN Departments d ON e.dept_id = d.dept_id
+GROUP BY d.dept_name
+HAVING COUNT(e.emp_id) > 2
+   AND AVG(e.salary)   > 70000;
+
+/* Expected Output:
+dept_name | emp_count | avg_salary
+----------|-----------|----------
+IT        | 3         | 86000.00
+*/
+
+------------------------------------------------------------
+Q5. [SELF JOIN] Employee names with their manager's names
+------------------------------------------------------------
+SELECT e.name        AS employee_name,
+       m.name        AS manager_name
+FROM   Employees e
+LEFT JOIN Employees m ON e.manager_id = m.emp_id;
+
+/* Expected Output:
+employee_name | manager_name
+--------------|-------------
+Alice         | NULL
+Bob           | Alice
+Charlie       | Alice
+David         | Charlie
+Eve           | Charlie
+Frank         | Alice
+Grace         | NULL
+*/
+
+------------------------------------------------------------
+Q6. [ORDER BY] Top 3 highest-paid employees
+------------------------------------------------------------
+SELECT name, salary
+FROM Employees
+ORDER BY salary DESC
+LIMIT 3;
+
+/* Expected Output:
+name    | salary
+--------|----------
+Alice   | 120000.00
+Charlie |  95000.00
+David   |  85000.00
+*/
+
+------------------------------------------------------------
+Q7. [JOINS + WHERE] Developers in San Francisco
+------------------------------------------------------------
+SELECT e.name, j.job_title, d.location
+FROM   Employees   e
+JOIN   Jobs        j ON e.job_id  = j.job_id
+JOIN   Departments d ON e.dept_id = d.dept_id
+WHERE  j.job_title  = 'Developer'
+  AND  d.location   = 'San Francisco';
+
+/* Expected Output:
+name  | job_title | location
+------|-----------|-------------
+David | Developer | San Francisco
+Eve   | Developer | San Francisco
+*/
+
+------------------------------------------------------------
+Q8. [GROUP BY] Number of employees hired each year
+------------------------------------------------------------
+SELECT YEAR(hire_date) AS hire_year,
+       COUNT(*)        AS employees_hired
+FROM   Employees
+GROUP  BY YEAR(hire_date)
+ORDER  BY hire_year;
+
+/* Expected Output:
+hire_year | employees_hired
+----------|----------------
+2015      | 1
+2016      | 1
+2018      | 1
+2019      | 1
+2020      | 1
+2021      | 1
+2022      | 1
+*/
+
+------------------------------------------------------------
+Q9. [HAVING] Job titles where max employee salary < 100,000
+------------------------------------------------------------
+SELECT j.job_title,
+       MAX(e.salary) AS max_salary
+FROM   Employees e
+JOIN   Jobs      j ON e.job_id = j.job_id
+GROUP  BY j.job_title
+HAVING MAX(e.salary) < 100000;
+
+/* Expected Output:
+job_title | max_salary
+----------|----------
+Developer |  85000.00
+Analyst   |  55000.00
+*/
+
+------------------------------------------------------------
+Q10. [SUBQUERY] Employees in the same department as 'David'
+------------------------------------------------------------
+SELECT name
+FROM   Employees
+WHERE  dept_id = (
+           SELECT dept_id
+           FROM   Employees
+           WHERE  name = 'David'
+       )
+  AND  name <> 'David';
+
+/* Expected Output:
+name
+-------
+Charlie
+Eve
+*/
+
+------------------------------------------------------------
+Q11. [MULTI-TABLE JOIN] All departments, even with no employees
+------------------------------------------------------------
+SELECT d.dept_name,
+       COUNT(e.emp_id) AS employee_count
+FROM   Departments d
+LEFT JOIN Employees e ON d.dept_id = e.dept_id
+GROUP  BY d.dept_name;
+
+/* Expected Output:
+dept_name  | employee_count
+-----------|---------------
+Finance    | 2
+IT         | 3
+Sales      | 1
+Marketing  | 1
+*/
+
+------------------------------------------------------------
+Q12. [COMPLEX FILTER] Hired 2018–2020 and salary > 60,000
+------------------------------------------------------------
+SELECT name, salary, hire_date
+FROM   Employees
+WHERE  hire_date BETWEEN '2018-01-01' AND '2020-12-31'
+  AND  salary > 60000;
+
+/* Expected Output:
+name  | salary   | hire_date
+------|----------|----------
+David | 85000.00 | 2019-11-01
+Eve   | 78000.00 | 2020-02-15
+*/
+
+------------------------------------------------------------
+Q13. [CORRELATED SUBQUERY] Employees earning above their dept avg
+------------------------------------------------------------
+SELECT e.name, e.salary, d.dept_name
+FROM   Employees   e
+JOIN   Departments d ON e.dept_id = d.dept_id
+WHERE  e.salary > (
+           SELECT AVG(e2.salary)
+           FROM   Employees e2
+           WHERE  e2.dept_id = e.dept_id
+       );
+
+/* Expected Output:
+name    | salary    | dept_name
+--------|-----------|----------
+Alice   | 120000.00 | Finance
+Charlie |  95000.00 | IT
+David   |  85000.00 | IT
+*/
+
+------------------------------------------------------------
+Q14. [JOINS] Job title and salary of employee with ID 504
+------------------------------------------------------------
+SELECT j.job_title, e.salary
+FROM   Employees e
+JOIN   Jobs      j ON e.job_id = j.job_id
+WHERE  e.emp_id = 504;
+
+/* Expected Output:
+job_title  | salary
+-----------|----------
+Developer  | 85000.00
+*/
+
+------------------------------------------------------------
+Q15. [GROUP BY] Minimum salary per manager
+------------------------------------------------------------
+SELECT manager_id,
+       MIN(salary) AS min_report_salary
+FROM   Employees
+WHERE  manager_id IS NOT NULL
+GROUP  BY manager_id;
+
+/* Expected Output:
+manager_id | min_report_salary
+-----------|------------------
+501        |  52000.00
+503        |  78000.00
+*/
+
+------------------------------------------------------------
+Q16. [SUBQUERY] Departments with no Analysts
+------------------------------------------------------------
+SELECT dept_name
+FROM   Departments
+WHERE  dept_id NOT IN (
+           SELECT DISTINCT e.dept_id
+           FROM   Employees e
+           JOIN   Jobs      j ON e.job_id = j.job_id
+           WHERE  j.job_title = 'Analyst'
+       );
+
+/* Expected Output:
+dept_name
+---------
+IT
+Marketing
+*/
+
+------------------------------------------------------------
+Q17. [AGGREGATION] Difference between highest and lowest salary
+------------------------------------------------------------
+SELECT MAX(salary) - MIN(salary) AS salary_range
+FROM   Employees;
+
+/* Expected Output:
+salary_range
+------------
+90000.00
+*/
+
+------------------------------------------------------------
+Q18. [JOIN + ORDER BY] Employee names & hire dates sorted by
+     dept name (A-Z) then salary (High-Low)
+------------------------------------------------------------
+SELECT e.name, e.hire_date, d.dept_name, e.salary
+FROM   Employees   e
+JOIN   Departments d ON e.dept_id = d.dept_id
+ORDER  BY d.dept_name ASC,
+          e.salary    DESC;
+
+/* Expected Output:
+name    | hire_date  | dept_name | salary
+--------|------------|-----------|----------
+Alice   | 2015-01-01 | Finance   | 120000.00
+Bob     | 2018-03-12 | Finance   |  55000.00
+Charlie | 2016-05-20 | IT        |  95000.00
+David   | 2019-11-01 | IT        |  85000.00
+Eve     | 2020-02-15 | IT        |  78000.00
+Grace   | 2022-08-10 | Marketing |  72000.00
+Frank   | 2021-06-21 | Sales     |  52000.00
+*/
+
+------------------------------------------------------------
+Q19. [HAVING] Managers who manage more than 2 people
+------------------------------------------------------------
+SELECT manager_id,
+       COUNT(*) AS report_count
+FROM   Employees
+WHERE  manager_id IS NOT NULL
+GROUP  BY manager_id
+HAVING COUNT(*) > 2;
+
+/* Expected Output:
+manager_id | report_count
+-----------|-------------
+501        | 3
+*/
+
+------------------------------------------------------------
+Q20. [SUBQUERY] Employee(s) with the 3rd-highest salary
+------------------------------------------------------------
+SELECT name, salary
+FROM   Employees
+WHERE  salary = (
+           SELECT DISTINCT salary
+           FROM   Employees
+           ORDER  BY salary DESC
+           LIMIT  1 OFFSET 2
+       );
+
+/* Expected Output:
+name  | salary
+------|----------
+David | 85000.00
+*/
+
+------------------------------------------------------------
+Q21. [LEFT JOIN] Job titles and employee count per title
+------------------------------------------------------------
+SELECT j.job_title,
+       COUNT(e.emp_id) AS employee_count
+FROM   Jobs      j
+LEFT JOIN Employees e ON j.job_id = e.job_id
+GROUP  BY j.job_title;
+
+/* Expected Output:
+job_title | employee_count
+----------|---------------
+Manager   | 2
+Developer | 3
+Analyst   | 2
+Intern    | 0
+*/
+
+------------------------------------------------------------
+Q22. [JOIN + LIKE] Finance employees whose name contains 'i'
+------------------------------------------------------------
+SELECT e.name, d.dept_name
+FROM   Employees   e
+JOIN   Departments d ON e.dept_id = d.dept_id
+WHERE  d.dept_name = 'Finance'
+  AND  e.name LIKE '%i%';
+
+/* Expected Output:
+name  | dept_name
+------|----------
+Alice | Finance
+*/
+
+------------------------------------------------------------
+Q23. [MATH + GROUP BY] Total 10% bonus per department
+------------------------------------------------------------
+SELECT d.dept_name,
+       SUM(e.salary * 0.10) AS total_bonus
+FROM   Employees   e
+JOIN   Departments d ON e.dept_id = d.dept_id
+GROUP  BY d.dept_name;
+
+/* Expected Output:
+dept_name  | total_bonus
+-----------|------------
+Finance    | 17500.00
+IT         | 25800.00
+Sales      |  5200.00
+Marketing  |  7200.00
+*/
+
+------------------------------------------------------------
+Q24. [SUBQUERY] Department with the highest total salary
+------------------------------------------------------------
+SELECT d.dept_name,
+       SUM(e.salary) AS total_salary
+FROM   Employees   e
+JOIN   Departments d ON e.dept_id = d.dept_id
+GROUP  BY d.dept_name
+ORDER  BY total_salary DESC
+LIMIT  1;
+
+/* Alternative using subquery:
+SELECT dept_name
+FROM   Departments
+WHERE  dept_id = (
+    SELECT dept_id
+    FROM   Employees
+    GROUP  BY dept_id
+    ORDER  BY SUM(salary) DESC
+    LIMIT  1
+);
+*/
+
+/* Expected Output:
+dept_name | total_salary
+----------|-------------
+IT        | 258000.00
+*/
+
+------------------------------------------------------------
+Q25. [JOINS] All employees who report to 'Charlie'
+------------------------------------------------------------
+SELECT e.name        AS employee_name,
+       m.name        AS manager_name
+FROM   Employees e
+JOIN   Employees m ON e.manager_id = m.emp_id
+WHERE  m.name = 'Charlie';
+
+/* Expected Output:
+employee_name | manager_name
+--------------|-------------
+David         | Charlie
+Eve           | Charlie
+*/
+
+============================================================
+  END OF SET 1
+============================================================

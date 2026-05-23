@@ -1,0 +1,533 @@
+============================================================
+  SQL PRACTICE SET 2 — 23 May 2026
+  Tables: Departments (D), Employees (E), Projects (P),
+          Assignments (A)
+============================================================
+
+Schema Quick Reference:
+  Departments : dept_id (PK), dept_name, location_id
+  Employees   : employee_id (PK), employee_name, manager_id, dept_id, salary
+  Projects    : project_id (PK), project_name, client_name, start_date, dept_id
+  Assignments : assignment_id (PK), employee_id (FK), project_id (FK),
+                hours_worked, start_date
+
+------------------------------------------------------------
+Q1. [JOINS] Employee Name, Department Name, and Location
+------------------------------------------------------------
+SELECT e.employee_name,
+       d.dept_name,
+       d.location_id
+FROM   Employees   e
+JOIN   Departments d ON e.dept_id = d.dept_id;
+
+/* Expected Output:
+employee_name  | dept_name   | location_id
+---------------|-------------|------------
+Alice Smith    | Consulting  | NYC
+Bob Johnson    | Engineering | SF
+Charlie Brown  | Engineering | SF
+Diana Prince   | R&D         | London
+Evan Clark     | R&D         | London
+Fiona Glen     | Engineering | SF
+George King    | Sales       | NYC
+Hannah Lee     | R&D         | London
+Ivan Rossi     | HR          | SF
+Jane Doe       | Engineering | SF
+Kevin Blue     | R&D         | London
+*/
+
+------------------------------------------------------------
+Q2. [JOINS + WHERE] Project Name, Client Name, and Total Hours
+     for projects managed by 'Consulting' department
+------------------------------------------------------------
+SELECT p.project_name,
+       p.client_name,
+       SUM(a.hours_worked) AS total_hours
+FROM   Projects    p
+JOIN   Assignments a ON p.project_id = a.project_id
+JOIN   Departments d ON p.dept_id    = d.dept_id
+WHERE  d.dept_name = 'Consulting'
+GROUP  BY p.project_name, p.client_name;
+
+/* Projects in dept 10 (Consulting): 5004 – Global Expansion
+Expected Output:
+project_name      | client_name          | total_hours
+------------------|----------------------|------------
+Global Expansion  | GlobalTech Solutions | 20
+*/
+
+------------------------------------------------------------
+Q3. [JOINS] Employees who worked on a 'GlobalTech Solutions' project
+------------------------------------------------------------
+SELECT DISTINCT e.employee_name,
+                p.project_name
+FROM   Employees   e
+JOIN   Assignments a ON e.employee_id = a.employee_id
+JOIN   Projects    p ON a.project_id  = p.project_id
+WHERE  p.client_name = 'GlobalTech Solutions';
+
+/* GlobalTech projects: 5001 (Aurora Migration), 5004 (Global Expansion)
+Expected Output:
+employee_name | project_name
+--------------|------------------
+Bob Johnson   | Aurora Migration
+Charlie Brown | Aurora Migration
+Fiona Glen    | Aurora Migration
+Alice Smith   | Global Expansion
+*/
+
+------------------------------------------------------------
+Q4. [LEFT JOIN / SUBQUERY] Departments with no employees assigned
+------------------------------------------------------------
+SELECT d.dept_name
+FROM   Departments d
+LEFT JOIN Employees e ON d.dept_id = e.dept_id
+WHERE  e.employee_id IS NULL;
+
+-- Alternative using NOT IN:
+-- SELECT dept_name FROM Departments
+-- WHERE dept_id NOT IN (SELECT DISTINCT dept_id FROM Employees);
+
+/* Expected Output:
+dept_name
+---------
+Admin
+*/
+
+------------------------------------------------------------
+Q5. [SELF JOIN + GROUP BY] Manager Name, their Dept, and direct report count
+------------------------------------------------------------
+SELECT m.employee_name          AS manager_name,
+       d.dept_name,
+       COUNT(e.employee_id)     AS direct_reports
+FROM   Employees   e
+JOIN   Employees   m ON e.manager_id = m.employee_id
+JOIN   Departments d ON m.dept_id    = d.dept_id
+GROUP  BY m.employee_name, d.dept_name
+ORDER  BY direct_reports DESC;
+
+/* Expected Output:
+manager_name  | dept_name   | direct_reports
+--------------|-------------|---------------
+Alice Smith   | Consulting  | 4
+Bob Johnson   | Engineering | 3
+Diana Prince  | R&D         | 3
+Evan Clark    | R&D         | 1
+*/
+
+------------------------------------------------------------
+Q6. [GROUP BY] Average Hours Worked per Employee across all projects
+------------------------------------------------------------
+SELECT e.employee_name,
+       AVG(a.hours_worked) AS avg_hours
+FROM   Employees   e
+JOIN   Assignments a ON e.employee_id = a.employee_id
+GROUP  BY e.employee_name
+ORDER  BY avg_hours DESC;
+
+/* Expected Output:
+employee_name | avg_hours
+--------------|----------
+Jane Doe      | 200.00
+Bob Johnson   | 200.00
+Charlie Brown | 170.00
+Fiona Glen    | 140.00
+Hannah Lee    |  75.00
+Diana Prince  |  80.00
+Evan Clark    |  70.00
+Kevin Blue    |  10.00
+Alice Smith   |  20.00
+George King   |   5.00
+*/
+
+------------------------------------------------------------
+Q7. [SUBQUERY + HAVING] Departments with avg salary above company avg
+------------------------------------------------------------
+SELECT d.dept_name,
+       AVG(e.salary) AS dept_avg_salary
+FROM   Employees   e
+JOIN   Departments d ON e.dept_id = d.dept_id
+GROUP  BY d.dept_name
+HAVING AVG(e.salary) > (SELECT AVG(salary) FROM Employees);
+
+/* Company avg salary = (180000+120000+95000+110000+85000+90000
+                         +75000+88000+60000+125000+86000)/11
+                       = ~101272.73
+Expected Output:
+dept_name   | dept_avg_salary
+------------|----------------
+Consulting  | 180000.00
+Engineering | 107500.00
+R&D         |  92250.00   ← (110000+85000+88000+86000)/4
+NOTE: R&D avg = 92250 < 101272 → excluded
+Actual output:
+dept_name   | dept_avg_salary
+------------|----------------
+Consulting  | 180000.00
+Engineering | 107500.00
+*/
+
+------------------------------------------------------------
+Q8. [HAVING] Clients whose projects total more than 500 hours worked
+------------------------------------------------------------
+SELECT p.client_name,
+       SUM(a.hours_worked) AS total_hours
+FROM   Projects    p
+JOIN   Assignments a ON p.project_id = a.project_id
+GROUP  BY p.client_name
+HAVING SUM(a.hours_worked) > 500;
+
+/* GlobalTech: 5001(150+160+140) + 5004(20) = 470 — excluded
+   Zenith Corp: 5002(80+70+75) + 5006(200+250+180) = 855 — included
+Expected Output:
+client_name  | total_hours
+-------------|------------
+Zenith Corp  | 855
+*/
+
+------------------------------------------------------------
+Q9. [GROUP BY + SUBQUERY] For each Location, department with most employees
+------------------------------------------------------------
+SELECT d.location_id,
+       d.dept_name,
+       COUNT(e.employee_id) AS emp_count
+FROM   Departments d
+JOIN   Employees   e ON d.dept_id = e.dept_id
+GROUP  BY d.location_id, d.dept_name
+HAVING COUNT(e.employee_id) = (
+    SELECT MAX(sub.cnt)
+    FROM (
+        SELECT d2.location_id,
+               COUNT(e2.employee_id) AS cnt
+        FROM   Departments d2
+        JOIN   Employees   e2 ON d2.dept_id = e2.dept_id
+        WHERE  d2.location_id = d.location_id
+        GROUP  BY d2.dept_name
+    ) sub
+);
+
+/* Expected Output:
+location_id | dept_name   | emp_count
+------------|-------------|----------
+NYC         | Consulting  | 2        (tied with Sales: 1 each — Consulting wins at 2)
+SF          | Engineering | 4
+London      | R&D         | 4
+*/
+
+------------------------------------------------------------
+Q10. [JOINS + HAVING] Projects with more than 5 employees assigned
+      (Note: max unique employees per project in current data = 3)
+------------------------------------------------------------
+SELECT p.project_name,
+       COUNT(DISTINCT a.employee_id) AS assigned_employees
+FROM   Projects    p
+JOIN   Assignments a ON p.project_id = a.project_id
+GROUP  BY p.project_name
+HAVING COUNT(DISTINCT a.employee_id) > 5;
+
+/* With current data, no project has >5 employees, so result is empty.
+   Query is correct; it would return rows with larger data. */
+
+/* If threshold is >2 (to show result with current data):
+   project_name     | assigned_employees
+   -----------------|-------------------
+   Aurora Migration | 3
+   Data Analytics   | 3
+   Synergy App Dev  | 3
+*/
+
+------------------------------------------------------------
+Q11. [RELATIONAL DIVISION] Employees who worked on ALL R&D dept projects
+------------------------------------------------------------
+SELECT e.employee_name
+FROM   Employees e
+WHERE NOT EXISTS (
+    SELECT p.project_id
+    FROM   Projects p
+    WHERE  p.dept_id = (SELECT dept_id FROM Departments WHERE dept_name = 'R&D')
+      AND  p.project_id NOT IN (
+               SELECT a.project_id
+               FROM   Assignments a
+               WHERE  a.employee_id = e.employee_id
+           )
+);
+
+/* R&D dept (dept_id=30) projects: 5002, 5007
+   Employees assigned to both: none in current data (Kevin Blue has 5007 only,
+   Diana/Evan/Hannah have 5002 only).
+   Result: empty set with current data — query logic is correct. */
+
+------------------------------------------------------------
+Q12. [JOINS + HAVING] Departments with employees on more than one project
+------------------------------------------------------------
+SELECT DISTINCT d.dept_name
+FROM   Departments d
+JOIN   Employees   e ON d.dept_id    = e.dept_id
+JOIN   Assignments a ON e.employee_id = a.employee_id
+GROUP  BY d.dept_name, e.employee_id
+HAVING COUNT(DISTINCT a.project_id) > 1;
+
+/* Expected Output:
+dept_name
+-----------
+Engineering   (Bob: projects 5001, 5006 | Charlie: 5001, 5006)
+*/
+
+------------------------------------------------------------
+Q13. [JOINS + WHERE] Employees with less than 10 hours on any project
+------------------------------------------------------------
+SELECT e.employee_name,
+       p.project_name,
+       a.hours_worked
+FROM   Employees   e
+JOIN   Assignments a ON e.employee_id = a.employee_id
+JOIN   Projects    p ON a.project_id  = p.project_id
+WHERE  a.hours_worked < 10;
+
+/* Expected Output:
+employee_name | project_name      | hours_worked
+--------------|-------------------|-------------
+George King   | Q4 Sales Strategy | 5
+*/
+
+------------------------------------------------------------
+Q14. [LEFT JOIN] Projects with no assigned employees
+------------------------------------------------------------
+SELECT p.project_name
+FROM   Projects    p
+LEFT JOIN Assignments a ON p.project_id = a.project_id
+WHERE  a.assignment_id IS NULL;
+
+/* Expected Output:
+project_name
+--------------
+Internal HR Tool
+*/
+
+------------------------------------------------------------
+Q15. [CORRELATED SUBQUERY] Employees whose salary > max salary in their dept
+------------------------------------------------------------
+SELECT e.employee_name, e.salary, d.dept_name
+FROM   Employees   e
+JOIN   Departments d ON e.dept_id = d.dept_id
+WHERE  e.salary > (
+    SELECT MAX(e2.salary)
+    FROM   Employees e2
+    WHERE  e2.dept_id = e.dept_id
+      AND  e2.employee_id <> e.employee_id
+);
+
+/* Note: An employee cannot earn more than the max of their OWN dept
+   (they ARE part of that max calculation). This query finds employees
+   who earn strictly more than everyone else in their dept.
+
+Expected Output:
+employee_name | salary     | dept_name
+--------------|------------|----------
+Alice Smith   | 180000.00  | Consulting
+Jane Doe      | 125000.00  | Engineering
+Ivan Rossi    |  60000.00  | HR
+George King   |  75000.00  | Sales
+*/
+
+------------------------------------------------------------
+Q16. [DATES] Employee Name and their oldest project assignment start date
+------------------------------------------------------------
+SELECT e.employee_name,
+       MIN(a.start_date) AS oldest_start_date
+FROM   Employees   e
+JOIN   Assignments a ON e.employee_id = a.employee_id
+GROUP  BY e.employee_name
+ORDER  BY oldest_start_date;
+
+/* Expected Output:
+employee_name | oldest_start_date
+--------------|------------------
+Bob Johnson   | 2022-11-01
+Charlie Brown | 2022-11-01
+Jane Doe      | 2022-11-01
+Diana Prince  | 2023-05-20
+Evan Clark    | 2023-06-01
+Hannah Lee    | 2023-05-25
+Fiona Glen    | 2023-02-01
+Alice Smith   | 2024-03-10
+George King   | 2024-01-01
+Kevin Blue    | 2024-06-01
+*/
+
+------------------------------------------------------------
+Q17. [DATE_FORMAT] Projects active (started) in the year 2023
+------------------------------------------------------------
+SELECT project_name,
+       DATE_FORMAT(start_date, '%Y-%m-%d') AS formatted_start
+FROM   Projects
+WHERE  DATE_FORMAT(start_date, '%Y') = '2023';
+
+-- Cleaner alternative:
+-- WHERE YEAR(start_date) = 2023;
+
+/* Expected Output:
+project_name      | formatted_start
+------------------|----------------
+Aurora Migration  | 2023-01-15
+Synergy App Dev   | 2023-05-20
+*/
+
+------------------------------------------------------------
+Q18. [IFNULL] Employee Names — show 'CEO' if no manager
+------------------------------------------------------------
+SELECT employee_name,
+       IFNULL(CAST(manager_id AS CHAR), 'CEO') AS manager_info
+FROM   Employees;
+
+-- To show the manager's name instead of ID:
+SELECT e.employee_name,
+       IFNULL(m.employee_name, 'CEO') AS manager_name
+FROM   Employees e
+LEFT JOIN Employees m ON e.manager_id = m.employee_id;
+
+/* Expected Output (name version):
+employee_name  | manager_name
+---------------|-------------
+Alice Smith    | CEO
+Bob Johnson    | Alice Smith
+Charlie Brown  | Bob Johnson
+Diana Prince   | Alice Smith
+Evan Clark     | Diana Prince
+Fiona Glen     | Bob Johnson
+George King    | Alice Smith
+Hannah Lee     | Diana Prince
+Ivan Rossi     | Alice Smith
+Jane Doe       | Bob Johnson
+Kevin Blue     | Evan Clark
+*/
+
+------------------------------------------------------------
+Q19. [GROUP BY + ORDER BY] Top 3 Departments by total hours worked
+------------------------------------------------------------
+SELECT d.dept_name,
+       SUM(a.hours_worked) AS total_hours
+FROM   Departments d
+JOIN   Employees   e ON d.dept_id    = e.dept_id
+JOIN   Assignments a ON e.employee_id = a.employee_id
+GROUP  BY d.dept_name
+ORDER  BY total_hours DESC
+LIMIT  3;
+
+/* Expected Output:
+dept_name   | total_hours
+------------|------------
+Engineering | 880
+R&D         | 235
+Consulting  | 20
+*/
+
+------------------------------------------------------------
+Q20. [CASE] Project Name with activity status
+------------------------------------------------------------
+SELECT p.project_name,
+       SUM(a.hours_worked) AS total_hours,
+       CASE
+           WHEN SUM(a.hours_worked) > 300 THEN 'High Activity'
+           ELSE 'Normal'
+       END AS status
+FROM   Projects    p
+LEFT JOIN Assignments a ON p.project_id = a.project_id
+GROUP  BY p.project_name;
+
+/* Expected Output:
+project_name      | total_hours | status
+------------------|-------------|---------------
+Aurora Migration  | 450         | High Activity
+Synergy App Dev   | 225         | Normal
+Q4 Sales Strategy |   5         | Normal
+Global Expansion  |  20         | Normal
+Internal HR Tool  | NULL        | Normal
+Data Analytics    | 630         | High Activity
+Future Tech R&D   |  10         | Normal
+*/
+
+------------------------------------------------------------
+Q21. [FULL OUTER JOIN via UNION] Employee Name and Manager Name,
+     including employees with no manager AND managers with no reports
+------------------------------------------------------------
+-- MySQL does not support FULL OUTER JOIN directly; simulate with UNION:
+SELECT e.employee_name,
+       m.employee_name AS manager_name
+FROM   Employees e
+LEFT JOIN Employees m ON e.manager_id = m.employee_id
+
+UNION
+
+SELECT e.employee_name,
+       m.employee_name AS manager_name
+FROM   Employees e
+RIGHT JOIN Employees m ON e.manager_id = m.employee_id;
+
+/* Expected Output:
+employee_name  | manager_name
+---------------|-------------
+Alice Smith    | NULL
+Bob Johnson    | Alice Smith
+Charlie Brown  | Bob Johnson
+Diana Prince   | Alice Smith
+Evan Clark     | Diana Prince
+Fiona Glen     | Bob Johnson
+George King    | Alice Smith
+Hannah Lee     | Diana Prince
+Ivan Rossi     | Alice Smith
+Jane Doe       | Bob Johnson
+Kevin Blue     | Evan Clark
+*/
+
+------------------------------------------------------------
+Q22. [CTE] Project Name and count of unique employees assigned
+------------------------------------------------------------
+WITH ProjectEmployeeCounts AS (
+    SELECT   p.project_name,
+             COUNT(DISTINCT a.employee_id) AS unique_employees
+    FROM     Projects    p
+    LEFT JOIN Assignments a ON p.project_id = a.project_id
+    GROUP BY p.project_name
+)
+SELECT project_name, unique_employees
+FROM   ProjectEmployeeCounts
+ORDER  BY unique_employees DESC;
+
+/* Expected Output:
+project_name      | unique_employees
+------------------|----------------
+Aurora Migration  | 3
+Data Analytics    | 3
+Synergy App Dev   | 3
+Global Expansion  | 1
+Q4 Sales Strategy | 1
+Future Tech R&D   | 1
+Internal HR Tool  | 0
+*/
+
+------------------------------------------------------------
+Q23. [SUBQUERY / IN] Employees assigned to the same projects as emp 101
+------------------------------------------------------------
+SELECT DISTINCT e.employee_name
+FROM   Employees   e
+JOIN   Assignments a ON e.employee_id = a.employee_id
+WHERE  a.project_id IN (
+           SELECT project_id
+           FROM   Assignments
+           WHERE  employee_id = 101
+       )
+  AND  e.employee_id <> 101;
+
+/* Employee 101 (Bob Johnson) is on projects 5001 and 5006.
+Expected Output:
+employee_name
+-------------
+Charlie Brown    (5001, 5006)
+Fiona Glen       (5001)
+Jane Doe         (5006)
+*/
+
+============================================================
+  END OF SET 2
+============================================================

@@ -1,0 +1,54 @@
+db.Employee.insert({ name: "Jayanth", department: "ECE" })
+
+db.Employee.insert({ name: "Tamil", mark: 90, location: "chennai" })
+
+db.Employee.find()
+
+db.Employee.insert({
+    name: "Gurpreet",
+    department: "CSE",
+    mark: 95,
+    location: "vellore",
+    specialization: "AI/ML"
+})
+
+db.Employee.insertMany([
+    { name: "Rahul",  department: "ECE", mark: 78, location: "delhi"   },
+    { name: "Sneha",  department: "CSE", mark: 88, location: "mumbai"  },
+    { name: "Aditya", department: "IT",  mark: 72, location: "chennai" }
+])
+
+db.Employee.find({ department: "CSE" })
+
+db.Employee.find({ mark: { $gt: 80 } })
+
+db.Employee.find({
+    location: "chennai",
+    mark: { $gt: 70 }
+})
+
+db.Employee.updateOne(
+    { name: "Gurpreet" },
+    { $set: { mark: 97 } }
+)
+
+db.Employee.find().forEach(function(student) {
+    let grade;
+    if (student.mark >= 90)      grade = "O";
+    else if (student.mark >= 80) grade = "A+";
+    else if (student.mark >= 70) grade = "A";
+    else                         grade = "B";
+
+    db.Employee.updateOne(
+        { _id: student._id },
+        { $set: { grade: grade } }
+    )
+})
+
+db.Employee.countDocuments()
+
+db.Employee.find().sort({ mark: -1 })
+
+db.Employee.deleteOne({ name: "Aditya" })
+
+db.Employee.find().pretty()

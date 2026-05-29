@@ -1,0 +1,93 @@
+db.products.insertMany([
+  { _id: 1, name: "Samsung Galaxy", price: 650, stock: 20, category: "mobile" },
+  { _id: 2, name: "OnePlus Nord",   price: 750, stock: 15, category: "mobile" },
+  { _id: 3, name: "Redmi Note 12",  price: 699, stock: 30, category: "mobile" },
+  { _id: 4, name: "iPhone 14",      price: 999, stock: 10, category: "mobile" },
+  { _id: 5, name: "Moto G84",       price: 500, stock: 25, category: "mobile" }
+]);
+
+db.products.updateOne(
+  { _id: 4 },
+  { $set: { name: "iPhone 15" } }
+);
+
+db.products.updateOne(
+  { price: { $gt: 700 } },
+  { $set: { name: "iPhone" } }
+);
+
+db.products.find({ price: { $gt: 700 } });
+
+db.products.updateMany(
+  { price: { $gt: 700 } },
+  { $set: { category: "smartphone" } }
+);
+
+db.products.find({ category: "smartphone" });
+
+db.products.updateOne(
+  { _id: 1 },
+  { $inc: { stock: 5 } }
+);
+
+db.products.updateMany(
+  { price: { $lt: 600 } },
+  { $inc: { stock: -3 } }
+);
+
+db.products.find({}, { name: 1, stock: 1 });
+
+db.products.updateOne(
+  { _id: 3 },
+  { $min: { price: 600 } }
+);
+
+db.products.updateOne(
+  { _id: 3 },
+  { $min: { price: 750 } }
+);
+
+db.products.find({ _id: 3 });
+
+db.products.updateOne(
+  { _id: 4 },
+  { $max: { price: 1200 } }
+);
+
+db.products.updateOne(
+  { _id: 4 },
+  { $max: { price: 800 } }
+);
+
+db.products.find({ _id: 4 });
+
+db.products.updateOne(
+  { _id: 5 },
+  { $mul: { price: 1.1 } }
+);
+
+db.products.find({ _id: 5 }, { name: 1, price: 1 });
+
+db.products.updateOne(
+  { _id: 2 },
+  { $unset: { category: "" } }
+);
+
+db.products.find({ _id: 2 });
+
+db.products.updateMany(
+  {},
+  { $rename: { stock: "quantity" } }
+);
+
+db.products.find({}, { name: 1, quantity: 1 });
+
+db.products.updateOne(
+  { _id: 10 },
+  { $set: { name: "Pixel 8", price: 899, category: "smartphone" } },
+  { upsert: true }
+);
+
+db.products.find({ _id: 10 });
+
+db.products.find().pretty();

@@ -1,0 +1,92 @@
+// ===== JDBC Java Program =====
+
+import java.sql.*;
+
+public class Testing1 {
+
+	public static void main(String[] args) {
+
+		try{  
+			Class.forName("com.mysql.cj.jdbc.Driver");
+			
+			Connection con=DriverManager.getConnection(  
+			"jdbc:mysql://localhost:3306/test","root","root");  
+			
+			Statement stmt=con.createStatement();  
+			
+			ResultSet rs=stmt.executeQuery("select * from student");  
+			while(rs.next()){  
+			System.out.println(rs.getInt(1)+"  "+
+			rs.getString(2)+"  "+rs.getInt(3));
+			}
+			con.close();  
+			}
+		catch(Exception e){
+			System.out.println("Sorry for the inconvinence happened..! "
+					+ "Check the inputs properly one more time");
+			}  
+			}
+
+}
+
+
+// ===== MySQL Commands =====
+
+show databases;
+
+create database test;
+use test;
+create table student(sid int unique not null, sname varchar(30) not null, smarks int not null);
+
+desc student;
+insert into student values(105,'Arthi',92);
+select * from student;
+
+
+// ===== MySQL Outputs =====
+
+-- show databases;
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| mysql              |
+| performance_schema |
+| sys                |
+| test               |
++--------------------+
+
+-- create database test;
+Query OK, 1 row affected (0.01 sec)
+
+-- use test;
+Database changed
+
+-- create table student(...);
+Query OK, 0 rows affected (0.03 sec)
+
+-- desc student;
++--------+-------------+------+-----+---------+-------+
+| Field  | Type        | Null | Key | Default | Extra |
++--------+-------------+------+-----+---------+-------+
+| sid    | int         | NO   | UNI | NULL    |       |
+| sname  | varchar(30) | NO   |     | NULL    |       |
+| smarks | int         | NO   |     | NULL    |       |
++--------+-------------+------+-----+---------+-------+
+3 rows in set (0.00 sec)
+
+-- insert into student values(105,'Arthi',92);
+Query OK, 1 row affected (0.01 sec)
+
+-- select * from student;
++-----+-------+--------+
+| sid | sname | smarks |
++-----+-------+--------+
+| 105 | Arthi |     92 |
++-----+-------+--------+
+1 row in set (0.00 sec)
+
+
+// ===== Java Program Output =====
+
+105  Arthi  92

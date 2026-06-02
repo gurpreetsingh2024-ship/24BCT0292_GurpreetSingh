@@ -1,0 +1,179 @@
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+public class CRUD_Test {
+
+public static void main(String[] args) {
+	CRUD_Test objTest=new CRUD_Test();
+	objTest.create_data("200", "Ravi", "ravi@gmail.com");
+	objTest.create_data("201", "Arun", "arun@gmail.com");
+	objTest.read_data("201");
+	objTest.update_data("201", "202", "Arun Kumar", "arunkumar@gmail.com");
+	objTest.delete_data("200");
+}
+
+public void create_data(String sl_no,String name,String email){
+	DB_Connection obj_DB_Connection=new DB_Connection();
+	Connection connection=obj_DB_Connection.get_connection();
+	PreparedStatement ps=null;
+	try {
+		ps=connection.prepareStatement("insert into user(sl_no,name,email) values (?,?,?)");
+		ps.setString(1, sl_no);
+		ps.setString(2, name);
+		ps.setString(3, email);
+		System.out.println(ps);
+		ps.executeUpdate();
+	} catch (Exception e) {
+		System.out.println(e);
+	}
+}
+
+public void read_data(String sl_no){
+	DB_Connection obj_DB_Connection=new DB_Connection();
+	Connection connection=obj_DB_Connection.get_connection();
+	PreparedStatement ps=null;
+	ResultSet rs=null;
+	try {
+		String query="select * from user where sl_no=?";
+		ps=connection.prepareStatement(query);
+		ps.setString(1, sl_no);
+		System.out.println(ps);
+		rs=ps.executeQuery();
+		while(rs.next()){
+		System.out.println("Sl no -"+rs.getString("sl_no"));
+		System.out.println("name -"+rs.getString("name"));
+		System.out.println("email -"+rs.getString("email"));
+		System.out.println("---------------");
+		}
+	} catch (Exception e) {
+		System.out.println(e);
+	}
+}
+
+public void edit_data(String sl_no){
+	DB_Connection obj_DB_Connection=new DB_Connection();
+	Connection connection=obj_DB_Connection.get_connection();
+	PreparedStatement ps=null;
+	ResultSet rs=null;
+	try{
+		String query = "select * from user where sl_no=?";
+		ps = connection.prepareStatement(query);
+		ps.setString(1, sl_no);
+		System.out.println(ps);
+		rs=ps.executeQuery();
+		if(rs.next()){
+			System.out.println("Sl no -"+rs.getString("sl_no"));
+			System.out.println("name -"+rs.getString("name"));
+			System.out.println("email -"+rs.getString("email"));
+			System.out.println("---------------");
+			}
+	}catch (Exception e) {
+		System.out.println(e);
+	}
+}
+
+public void update_data(String old_sl_no, String new_sl_no, String name, String email){
+	DB_Connection obj_DB_Connection=new DB_Connection();
+	Connection connection=obj_DB_Connection.get_connection();
+	PreparedStatement ps=null;
+	try {
+		String query="update user set sl_no=?, name=?, email=? where sl_no=?";
+		ps=connection.prepareStatement(query);
+		ps.setString(1, new_sl_no);
+		ps.setString(2, name);
+		ps.setString(3, email);
+		ps.setString(4, old_sl_no);
+		System.out.println(ps);
+		ps.executeUpdate();
+		System.out.println("Record updated successfully.");
+	} catch (Exception e) {
+		System.out.println(e);
+	}
+}
+
+public void delete_data(String sl_no){
+	DB_Connection obj_DB_Connection=new DB_Connection();
+	Connection connection=obj_DB_Connection.get_connection();
+	PreparedStatement ps=null;
+	try {
+		String query="delete from user where sl_no=?";
+		ps=connection.prepareStatement(query);
+		ps.setString(1, sl_no);
+		System.out.println(ps);
+		ps.executeUpdate();
+		System.out.println("Record deleted successfully.");
+	} catch (Exception e) {
+		System.out.println(e);
+	}
+}
+
+public void truncate_data() {
+	    DB_Connection obj_DB_Connection = new DB_Connection();
+	    Connection connection = obj_DB_Connection.get_connection();
+	    PreparedStatement ps = null;
+
+	    try {
+	        String query = "truncate table student";
+	        ps = connection.prepareStatement(query);
+	        System.out.println(ps);
+	        ps.executeUpdate();
+	        System.out.println("All records deleted successfully.");
+
+	    } catch (Exception e) {
+	        System.out.println(e);
+	    }
+	}
+
+public void alter_table() {
+	    DB_Connection obj_DB_Connection = new DB_Connection();
+	    Connection connection = obj_DB_Connection.get_connection();
+	    PreparedStatement ps = null;
+
+	    try {
+	        String query = "alter table student ADD address VARCHAR(20)";
+	        ps = connection.prepareStatement(query);
+	        System.out.println(ps);
+	        ps.executeUpdate();
+	        System.out.println("Column added successfully.");
+
+	    } catch (Exception e) {
+	        System.out.println(e);
+	    }
+	}
+}
+
+
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
+import com.mongodb.client.MongoDatabase;
+
+public class MongoDBConnection {
+    public static void main(String[] args) {
+        String connectionString = "mongodb://localhost:27017";
+
+        try (MongoClient mongoClient = MongoClients.create(connectionString)) {
+            MongoDatabase database = mongoClient.getDatabase("testdb");
+            System.out.println("Connected successfully to MongoDB!");
+        }
+    }
+}
+
+
+========== OUTPUT ==========
+
+com.mysql.cj.jdbc.ClientPreparedStatement: insert into user(sl_no,name,email) values ('200','Ravi','ravi@gmail.com')
+com.mysql.cj.jdbc.ClientPreparedStatement: insert into user(sl_no,name,email) values ('201','Arun','arun@gmail.com')
+com.mysql.cj.jdbc.ClientPreparedStatement: select * from user where sl_no='201'
+Sl no - 201
+name - Arun
+email - arun@gmail.com
+---------------
+com.mysql.cj.jdbc.ClientPreparedStatement: update user set sl_no='202', name='Arun Kumar', email='arunkumar@gmail.com' where sl_no='201'
+Record updated successfully.
+com.mysql.cj.jdbc.ClientPreparedStatement: delete from user where sl_no='200'
+Record deleted successfully.
+com.mysql.cj.jdbc.ClientPreparedStatement: truncate table student
+All records deleted successfully.
+com.mysql.cj.jdbc.ClientPreparedStatement: alter table student ADD address VARCHAR(20)
+Column added successfully.
+Connected successfully to MongoDB!

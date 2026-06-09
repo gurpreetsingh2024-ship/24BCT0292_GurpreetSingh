@@ -1,0 +1,124 @@
+mkdir Db0 Db1 Db2
+
+mongod --port 27017 --dbpath Db0 --replSet rs0 --bind_ip localhost
+{"t":{"$date":"2026-06-09T10:00:00.000+00:00"},"s":"I","c":"NETWORK","id":23016,"ctx":"listener","msg":"Waiting for connections","attr":{"port":27017,"ssl":"off"}}
+
+mongod --port 27018 --dbpath Db1 --replSet rs0 --bind_ip localhost
+{"t":{"$date":"2026-06-09T10:00:01.000+00:00"},"s":"I","c":"NETWORK","id":23016,"ctx":"listener","msg":"Waiting for connections","attr":{"port":27018,"ssl":"off"}}
+
+mongod --port 27019 --dbpath Db2 --replSet rs0 --bind_ip localhost
+{"t":{"$date":"2026-06-09T10:00:02.000+00:00"},"s":"I","c":"NETWORK","id":23016,"ctx":"listener","msg":"Waiting for connections","attr":{"port":27019,"ssl":"off"}}
+
+mongosh --port 27017
+Current Mongosh Log ID: 66660000000000000000001
+Connecting to: mongodb://127.0.0.1:27017/?directConnection=true&serverSelectionTimeoutMS=2000&appName=mongosh+2.2.0
+Using MongoDB: 7.0.0
+Using Mongosh: 2.2.0
+
+rs.initiate({
+  _id: "rs0",
+  members: [
+    { _id: 0, host: "localhost:27017" },
+    { _id: 1, host: "localhost:27018" },
+    { _id: 2, host: "localhost:27019" }
+  ]
+})
+{
+  ok: 1,
+  '$clusterTime': {
+    clusterTime: Timestamp({ t: 1749459600, i: 1 }),
+    signature: {
+      hash: Binary.createFromBase64('AAAAAAAAAAAAAAAAAAAAAAAAAAA=', 0),
+      keyId: Long('0')
+    }
+  },
+  operationTime: Timestamp({ t: 1749459600, i: 1 })
+}
+
+rs.status()
+{
+  set: 'rs0',
+  date: ISODate('2026-06-09T10:01:00.000Z'),
+  myState: 1,
+  term: Long('1'),
+  syncSourceHost: '',
+  syncSourceId: -1,
+  heartbeatIntervalMillis: Long('2000'),
+  majorityVoteCount: 2,
+  writeMajorityCount: 2,
+  votingMembersCount: 3,
+  writableVotingMembersCount: 3,
+  members: [
+    {
+      _id: 0,
+      name: 'localhost:27017',
+      health: 1,
+      state: 1,
+      stateStr: 'PRIMARY',
+      uptime: 60,
+      optime: { ts: Timestamp({ t: 1749459600, i: 1 }), t: Long('1') },
+      optimeDate: ISODate('2026-06-09T10:00:00.000Z'),
+      syncSourceHost: '',
+      syncSourceId: -1,
+      infoMessage: '',
+      electionTime: Timestamp({ t: 1749459605, i: 1 }),
+      electionDate: ISODate('2026-06-09T10:00:05.000Z'),
+      configVersion: 1,
+      configTerm: 1,
+      self: true,
+      lastHeartbeatMessage: ''
+    },
+    {
+      _id: 1,
+      name: 'localhost:27018',
+      health: 1,
+      state: 2,
+      stateStr: 'SECONDARY',
+      uptime: 55,
+      optime: { ts: Timestamp({ t: 1749459600, i: 1 }), t: Long('1') },
+      optimeDate: ISODate('2026-06-09T10:00:00.000Z'),
+      syncSourceHost: 'localhost:27017',
+      syncSourceId: 0,
+      infoMessage: '',
+      configVersion: 1,
+      configTerm: 1,
+      lastHeartbeatMessage: ''
+    },
+    {
+      _id: 2,
+      name: 'localhost:27019',
+      health: 1,
+      state: 2,
+      stateStr: 'SECONDARY',
+      uptime: 50,
+      optime: { ts: Timestamp({ t: 1749459600, i: 1 }), t: Long('1') },
+      optimeDate: ISODate('2026-06-09T10:00:00.000Z'),
+      syncSourceHost: 'localhost:27017',
+      syncSourceId: 0,
+      infoMessage: '',
+      configVersion: 1,
+      configTerm: 1,
+      lastHeartbeatMessage: ''
+    }
+  ],
+  ok: 1
+}
+
+use testdb
+switched to db testdb
+
+db.students.insertOne({ name: "Gurpreet", branch: "CSE", year: 2 })
+{
+  acknowledged: true,
+  insertedId: ObjectId('6663a1b2c3d4e5f6a7b8c9d0')
+}
+
+db.students.find()
+[
+  {
+    _id: ObjectId('6663a1b2c3d4e5f6a7b8c9d0'),
+    name: 'Gurpreet',
+    branch: 'CSE',
+    year: 2
+  }
+]

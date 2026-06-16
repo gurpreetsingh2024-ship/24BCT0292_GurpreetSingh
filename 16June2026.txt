@@ -1,0 +1,477 @@
+================================================================================
+FILE: gameController.js
+================================================================================
+const Game = require('../models/Game');
+
+exports.createGame = async (req, res) => {
+  try {
+    const game = await Game.create(req.body);
+    res.status(201).json(game);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+exports.getGames = async (req, res) => {
+  try {
+    const games = await Game.find();
+    res.status(200).json(games);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.getGameById = async (req, res) => {
+  try {
+    const game = await Game.findById(req.params.id);
+    if (!game) {
+      return res.status(404).json({ message: 'Game not found' });
+    }
+    res.status(200).json(game);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.updateGame = async (req, res) => {
+  try {
+    const game = await Game.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: true,
+    });
+    if (!game) {
+      return res.status(404).json({ message: 'Game not found' });
+    }
+    res.status(200).json(game);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+exports.deleteGame = async (req, res) => {
+  try {
+    const game = await Game.findByIdAndDelete(req.params.id);
+    if (!game) {
+      return res.status(404).json({ message: 'Game not found' });
+    }
+    res.status(200).json({ message: 'Game deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
+================================================================================
+FILE: matchController.js
+================================================================================
+const Match = require('../models/Match');
+
+exports.createMatch = async (req, res) => {
+  try {
+    const match = await Match.create(req.body);
+    res.status(201).json(match);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+exports.getMatches = async (req, res) => {
+  try {
+    const filter = {};
+    if (req.query.tournament) filter.tournament = req.query.tournament;
+    if (req.query.stage) filter.stage = req.query.stage;
+
+    const matches = await Match.find(filter)
+      .populate('tournament')
+      .populate('team1')
+      .populate('team2')
+      .populate('winner');
+    res.status(200).json(matches);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.getMatchById = async (req, res) => {
+  try {
+    const match = await Match.findById(req.params.id)
+      .populate('tournament')
+      .populate('team1')
+      .populate('team2')
+      .populate('winner');
+    if (!match) {
+      return res.status(404).json({ message: 'Match not found' });
+    }
+    res.status(200).json(match);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.updateMatch = async (req, res) => {
+  try {
+    const match = await Match.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: true,
+    });
+    if (!match) {
+      return res.status(404).json({ message: 'Match not found' });
+    }
+    res.status(200).json(match);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+exports.deleteMatch = async (req, res) => {
+  try {
+    const match = await Match.findByIdAndDelete(req.params.id);
+    if (!match) {
+      return res.status(404).json({ message: 'Match not found' });
+    }
+    res.status(200).json({ message: 'Match deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
+================================================================================
+FILE: playerController.js
+================================================================================
+const Player = require('../models/Player');
+
+exports.createPlayer = async (req, res) => {
+  try {
+    const player = await Player.create(req.body);
+    res.status(201).json(player);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+exports.getPlayers = async (req, res) => {
+  try {
+    const filter = {};
+    if (req.query.team) filter.team = req.query.team;
+    if (req.query.country) filter.country = req.query.country;
+    if (req.query.role) filter.role = req.query.role;
+
+    const players = await Player.find(filter).populate('team');
+    res.status(200).json(players);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.getPlayerById = async (req, res) => {
+  try {
+    const player = await Player.findById(req.params.id).populate('team');
+    if (!player) {
+      return res.status(404).json({ message: 'Player not found' });
+    }
+    res.status(200).json(player);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.updatePlayer = async (req, res) => {
+  try {
+    const player = await Player.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: true,
+    });
+    if (!player) {
+      return res.status(404).json({ message: 'Player not found' });
+    }
+    res.status(200).json(player);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+exports.deletePlayer = async (req, res) => {
+  try {
+    const player = await Player.findByIdAndDelete(req.params.id);
+    if (!player) {
+      return res.status(404).json({ message: 'Player not found' });
+    }
+    res.status(200).json({ message: 'Player deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
+================================================================================
+FILE: teamController.js
+================================================================================
+const Team = require('../models/Team');
+
+exports.createTeam = async (req, res) => {
+  try {
+    const team = await Team.create(req.body);
+    res.status(201).json(team);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+exports.getTeams = async (req, res) => {
+  try {
+    const filter = {};
+    if (req.query.game) filter.game = req.query.game;
+    if (req.query.region) filter.region = req.query.region;
+
+    const teams = await Team.find(filter).populate('game');
+    res.status(200).json(teams);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.getTeamById = async (req, res) => {
+  try {
+    const team = await Team.findById(req.params.id).populate('game');
+    if (!team) {
+      return res.status(404).json({ message: 'Team not found' });
+    }
+    res.status(200).json(team);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.updateTeam = async (req, res) => {
+  try {
+    const team = await Team.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: true,
+    });
+    if (!team) {
+      return res.status(404).json({ message: 'Team not found' });
+    }
+    res.status(200).json(team);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+exports.deleteTeam = async (req, res) => {
+  try {
+    const team = await Team.findByIdAndDelete(req.params.id);
+    if (!team) {
+      return res.status(404).json({ message: 'Team not found' });
+    }
+    res.status(200).json({ message: 'Team deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
+================================================================================
+FILE: tournamentController.js
+================================================================================
+const Tournament = require('../models/Tournament');
+
+exports.createTournament = async (req, res) => {
+  try {
+    const tournament = await Tournament.create(req.body);
+    res.status(201).json(tournament);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+exports.getTournaments = async (req, res) => {
+  try {
+    const filter = {};
+    if (req.query.status) filter.status = req.query.status;
+    if (req.query.game) filter.game = req.query.game;
+
+    const tournaments = await Tournament.find(filter).populate('game').populate('participants');
+    res.status(200).json(tournaments);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.getTournamentById = async (req, res) => {
+  try {
+    const tournament = await Tournament.findById(req.params.id)
+      .populate('game')
+      .populate('participants');
+    if (!tournament) {
+      return res.status(404).json({ message: 'Tournament not found' });
+    }
+    res.status(200).json(tournament);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.updateTournament = async (req, res) => {
+  try {
+    const tournament = await Tournament.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: true,
+    });
+    if (!tournament) {
+      return res.status(404).json({ message: 'Tournament not found' });
+    }
+    res.status(200).json(tournament);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+exports.deleteTournament = async (req, res) => {
+  try {
+    const tournament = await Tournament.findByIdAndDelete(req.params.id);
+    if (!tournament) {
+      return res.status(404).json({ message: 'Tournament not found' });
+    }
+    res.status(200).json({ message: 'Tournament deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.registerTeam = async (req, res) => {
+  try {
+    const tournament = await Tournament.findById(req.params.id);
+    if (!tournament) {
+      return res.status(404).json({ message: 'Tournament not found' });
+    }
+
+    const { teamId } = req.body;
+    if (!teamId) {
+      return res.status(400).json({ message: 'teamId is required' });
+    }
+
+    if (tournament.participants.includes(teamId)) {
+      return res.status(400).json({ message: 'Team already registered' });
+    }
+
+    tournament.participants.push(teamId);
+    await tournament.save();
+
+    res.status(200).json(tournament);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+
+================================================================================
+FILE: gameRoutes.js
+================================================================================
+const express = require('express');
+const router = express.Router();
+const {
+  createGame,
+  getGames,
+  getGameById,
+  updateGame,
+  deleteGame,
+} = require('../controllers/gameController');
+
+router.post('/', createGame);
+router.get('/', getGames);
+router.get('/:id', getGameById);
+router.put('/:id', updateGame);
+router.delete('/:id', deleteGame);
+
+module.exports = router;
+
+
+================================================================================
+FILE: matchRoutes.js
+================================================================================
+const express = require('express');
+const router = express.Router();
+const {
+  createMatch,
+  getMatches,
+  getMatchById,
+  updateMatch,
+  deleteMatch,
+} = require('../controllers/matchController');
+
+router.post('/', createMatch);
+router.get('/', getMatches);
+router.get('/:id', getMatchById);
+router.put('/:id', updateMatch);
+router.delete('/:id', deleteMatch);
+
+module.exports = router;
+
+
+================================================================================
+FILE: playerRoutes.js
+================================================================================
+const express = require('express');
+const router = express.Router();
+const {
+  createPlayer,
+  getPlayers,
+  getPlayerById,
+  updatePlayer,
+  deletePlayer,
+} = require('../controllers/playerController');
+
+router.post('/', createPlayer);
+router.get('/', getPlayers);
+router.get('/:id', getPlayerById);
+router.put('/:id', updatePlayer);
+router.delete('/:id', deletePlayer);
+
+module.exports = router;
+
+
+================================================================================
+FILE: teamRoutes.js
+================================================================================
+const express = require('express');
+const router = express.Router();
+const {
+  createTeam,
+  getTeams,
+  getTeamById,
+  updateTeam,
+  deleteTeam,
+} = require('../controllers/teamController');
+
+router.post('/', createTeam);
+router.get('/', getTeams);
+router.get('/:id', getTeamById);
+router.put('/:id', updateTeam);
+router.delete('/:id', deleteTeam);
+
+module.exports = router;
+
+
+================================================================================
+FILE: tournamentRoutes.js
+================================================================================
+const express = require('express');
+const router = express.Router();
+const {
+  createTournament,
+  getTournaments,
+  getTournamentById,
+  updateTournament,
+  deleteTournament,
+  registerTeam,
+} = require('../controllers/tournamentController');
+
+router.post('/', createTournament);
+router.get('/', getTournaments);
+router.get('/:id', getTournamentById);
+router.put('/:id', updateTournament);
+router.delete('/:id', deleteTournament);
+router.post('/:id/register', registerTeam);
+
+module.exports = router;

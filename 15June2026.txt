@@ -1,0 +1,101 @@
+================================================================================
+FILE: db.js
+================================================================================
+const mongoose = require('mongoose');
+
+const connectDB = async () => {
+  try {
+    await mongoose.connect(process.env.MONGO_URI);
+    console.log('MongoDB connected successfully');
+  } catch (error) {
+    console.error(`MongoDB connection error: ${error.message}`);
+    process.exit(1);
+  }
+};
+
+module.exports = connectDB;
+
+
+================================================================================
+FILE: Game.js
+================================================================================
+const mongoose = require('mongoose');
+
+const gameSchema = new mongoose.Schema({
+  name: { type: String, required: true, unique: true },
+  genre: { type: String, required: true },
+  platform: { type: String, required: true },
+  publisher: { type: String },
+}, { timestamps: true });
+
+module.exports = mongoose.model('Game', gameSchema);
+
+
+================================================================================
+FILE: Match.js
+================================================================================
+const mongoose = require('mongoose');
+
+const matchSchema = new mongoose.Schema({
+  tournament: { type: mongoose.Schema.Types.ObjectId, ref: 'Tournament', required: true },
+  team1: { type: mongoose.Schema.Types.ObjectId, ref: 'Team', required: true },
+  team2: { type: mongoose.Schema.Types.ObjectId, ref: 'Team', required: true },
+  winner: { type: mongoose.Schema.Types.ObjectId, ref: 'Team' },
+  stage: { type: String },
+  score: { type: String },
+  playedAt: { type: Date, default: Date.now },
+}, { timestamps: true });
+
+module.exports = mongoose.model('Match', matchSchema);
+
+
+================================================================================
+FILE: Player.js
+================================================================================
+const mongoose = require('mongoose');
+
+const playerSchema = new mongoose.Schema({
+  gamertag: { type: String, required: true, unique: true },
+  realName: { type: String, required: true },
+  role: { type: String, enum: ['IGL', 'Rifler', 'AWPer', 'Support', 'Entry'] },
+  country: { type: String },
+  team: { type: mongoose.Schema.Types.ObjectId, ref: 'Team' },
+  earnings: { type: Number, default: 0 },
+}, { timestamps: true });
+
+module.exports = mongoose.model('Player', playerSchema);
+
+
+================================================================================
+FILE: Team.js
+================================================================================
+const mongoose = require('mongoose');
+
+const teamSchema = new mongoose.Schema({
+  teamName: { type: String, required: true },
+  region: { type: String, required: true },
+  game: { type: mongoose.Schema.Types.ObjectId, ref: 'Game', required: true },
+  foundedYear: { type: Number },
+  wins: { type: Number, default: 0 },
+}, { timestamps: true });
+
+module.exports = mongoose.model('Team', teamSchema);
+
+
+================================================================================
+FILE: Tournament.js
+================================================================================
+const mongoose = require('mongoose');
+
+const tournamentSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  game: { type: mongoose.Schema.Types.ObjectId, ref: 'Game', required: true },
+  prizePool: { type: Number, required: true },
+  format: { type: String, enum: ['Single Elimination', 'Double Elimination', 'Round Robin'] },
+  status: { type: String, enum: ['upcoming', 'ongoing', 'completed'], default: 'upcoming' },
+  startDate: { type: Date },
+  endDate: { type: Date },
+  participants: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Team' }],
+}, { timestamps: true });
+
+module.exports = mongoose.model('Tournament', tournamentSchema);
